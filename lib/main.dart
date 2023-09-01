@@ -27,8 +27,20 @@ class MainApp extends StatelessWidget {
           scrollbarTheme: ScrollbarThemeData(
             thumbColor: MaterialStateProperty.all(AppColors.greyColor),
           ),
+          inputDecorationTheme: InputDecorationTheme(
+            enabledBorder: outlineInputBorder(),
+            border: outlineInputBorder(),
+            focusedBorder: outlineInputBorder(),
+          ),
         ),
         routes: appRoutes,
         home: const SplashPage());
+  }
+
+  OutlineInputBorder outlineInputBorder() {
+    return OutlineInputBorder(
+      borderSide: BorderSide(width: 1, color: AppColors.blackColor.withOpacity(0.5)),
+      borderRadius: const BorderRadius.all(Radius.circular(10.0)),
+    );
   }
 }

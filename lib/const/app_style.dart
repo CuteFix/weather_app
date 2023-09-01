@@ -25,6 +25,7 @@ class AppStyle {
   static TextStyle textStyleTemperature() => _googleFonts(
         const TextStyle(
           fontSize: 36.0,
+          color: AppColors.whiteColor,
           fontWeight: FontWeight.bold,
         ),
       );
@@ -37,6 +38,7 @@ class AppStyle {
 
   static TextStyle textStyleWeatherInfo() => _googleFonts(
         const TextStyle(
+          color: AppColors.whiteColor,
           fontSize: 18.0,
         ),
       );

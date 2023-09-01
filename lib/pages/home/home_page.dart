@@ -35,12 +35,16 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: BlocConsumer<HomeBloc, HomeState>(
         listener: (context, state) {
-          if (state is LoadedHomeState && !state.item.hasPermission) {
+          if (state is LoadedHomeState &&
+              !state.item.hasPermission &&
+              state.item.permission?.isNotEmpty == true) {
             _showPermissionSnackBar(context, state.item.permission);
           }
         },
         builder: (context, state) {
-          return Scaffold(appBar: _buildAppBar(), body: _buildWeatherContainer(context, state));
+          return Scaffold(
+              //appBar: _buildAppBar(),
+              body: _buildWeatherContainer(context, state));
         },
       ),
     );
@@ -76,27 +80,28 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCityTextField() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-      child: SizedBox(
-        width: (MediaQuery.of(context).size.width - 100),
-        child: TextField(
-          controller: _cityController,
-          decoration: InputDecoration(
-            hintText: AppTexts.enterCityHint,
-            hintStyle: AppStyle.textStyleDayOfWeek(),
-            contentPadding: const EdgeInsets.only(left: 10),
-            focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(10.0)),
-            ),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(10.0)),
-            ),
-          ),
-          onChanged: (text) async {
-            context.read<HomeBloc>().add(GetListCityEvent(text));
-          },
+    return SizedBox(
+      width: (MediaQuery.of(context).size.width - 100),
+      height: 35,
+      child: TextField(
+        controller: _cityController,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.white2Color,
+          hintText: AppTexts.enterCityHint,
+          hintStyle: AppStyle.textStyleDayOfWeek(),
+          contentPadding: const EdgeInsets.only(left: 10),
         ),
+        onChanged: (text) async {
+          context.read<HomeBloc>().add(GetListCityEvent(text));
+        },
+        onSubmitted: (text) {
+          if (text.isNotEmpty) {
+            context.read<HomeBloc>().add(GetWeatherCityName(text));
+          } else {
+            context.read<HomeBloc>().add(const GetCurrentLocationEvent());
+          }
+        },
       ),
     );
   }
@@ -163,6 +168,9 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  SizedBox(height: MediaQuery.of(context).viewPadding.top),
+                  const SizedBox(height: 10.0),
+                  Center(child: _buildCityTextField()),
                   //  SizedBox(height: MediaQuery.of(context).viewPadding.top),
                   // TextField(
                   //   controller: _cityController,
@@ -241,36 +249,77 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             if (cityList.isNotEmpty && _cityController.text.isNotEmpty)
-              SizedBox(
-                height: cityList.length * 40,
-                child: ListView.builder(
-                  itemCount: cityList.length,
-                  itemBuilder: (context, index) {
-                    return InkWell(
-                      onTap: () {
-                        _selectCity(
-                            '${cityList[index].name ?? ' '},${cityList[index].country ?? ''}');
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.whiteColor.withOpacity(0.5),
-                        ),
-                        height: 40,
-                        width: double.infinity,
-                        child: ListTile(
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Text(
-                                '${cityList[index].name ?? ' '},${cityList[index].country}',
-                                style: AppStyle.textStyleButton(),
+              Align(
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).viewPadding.top + 10,
+                    ),
+                    SizedBox(
+                      height: cityList.length * 60,
+                      width: (MediaQuery.of(context).size.width - 102),
+                      child: ListView.separated(
+                        itemCount: cityList.length,
+                        itemBuilder: (context, index) {
+                          final isLastItem = index == cityList.length - 1;
+
+                          final border = Border(
+                            bottom: BorderSide(
+                              color: isLastItem ? Colors.transparent : AppColors.white2Color,
+                              width: isLastItem ? 0.0 : 1.0,
+                            ),
+                          );
+
+                          Widget item = InkWell(
+                            onTap: () {
+                              _selectCity(
+                                  '${cityList[index].name ?? ' '},${cityList[index].country ?? ''}');
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.white2Color,
+                                border: border,
                               ),
-                            ],
-                          ),
+                              height: 40,
+                              width: double.infinity,
+                              child: Center(
+                                // Center the content horizontally
+                                child: ListTile(
+                                  title: Column(
+                                    children: [
+                                      Text(
+                                        '${cityList[index].name ?? ' '},${cityList[index].country}',
+                                        style: AppStyle.textStyleButton(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+
+                          if (isLastItem) {
+                            // Wrap the last item with ClipRRect to create a circular border
+                            item = ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(12.0),
+                                bottomRight: Radius.circular(12.0),
+                              ),
+                              child: item,
+                            );
+                          }
+
+                          return item;
+                        },
+                        separatorBuilder: (context, index) => const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.greyColor,
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
           ],

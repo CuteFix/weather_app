@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/cli_commands.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:weather_app/const/app_texts.dart';
 import 'package:weather_app/core/repositories/query/get/get_query.dart';
@@ -61,103 +60,125 @@ class WeatherRepository implements IWeatherRepository {
 
   @override
   Future<WeatherData> getCurrentWeather(String cityName) async {
-    final permission = await _handleLocationPermission();
+    WeatherData? weatherData;
 
-    if (!permission.hasPermission) {
-      return WeatherData()
-          .copyWith(hasPermission: permission.hasPermission, permission: permission.permissionText);
+    if (cityName.isNotEmpty) {
+      weatherData = await _getWeatherByCityName(cityName);
+    } else {
+      final permission = await _handleLocationPermission();
+
+      if (permission.hasPermission) {
+        weatherData = await _getCurrentWeatherByLocation();
+      }
     }
 
+    return weatherData ?? WeatherData();
+  }
+
+  Future<WeatherData?> _getWeatherByCityName(String cityName) async {
+    try {
+      final response = await _dio.get(
+        GetQuery.getWeatherByCityName(cityName: cityName).buildQuery(),
+      );
+
+      return WeatherData.fromJson(response.data);
+    } catch (e) {
+      return _handleDioException(e);
+    }
+  }
+
+  Future<WeatherData?> _getCurrentWeatherByLocation() async {
     try {
       final Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      final response = cityName.isNotEmpty
-          ? await _dio.get(
-              GetQuery.getWeatherByCityName(cityName: cityName).buildQuery(),
-            )
-          : await _dio.get(GetQuery.getCurrentWeather(
-              lat: position.latitude,
-              lon: position.longitude,
-            ).buildQuery());
+      final response = await _dio.get(GetQuery.getCurrentWeather(
+        lat: position.latitude,
+        lon: position.longitude,
+      ).buildQuery());
 
-      final weatherData = WeatherData.fromJson(response.data)
-          .copyWith(hasPermission: permission.hasPermission, permission: permission.permissionText);
-
-      return weatherData;
+      return WeatherData.fromJson(response.data);
     } catch (e) {
-      if (e is DioException) {
-        if (e.response != null) {
-          debugPrint(AppTexts.dioError);
-          debugPrint('STATUS: ${e.response?.statusCode}');
-          debugPrint('DATA: ${e.response?.data}');
-          debugPrint('HEADERS: ${e.response?.headers}');
-          return WeatherData()
-              .copyWith(permission: e.response?.data['message'].toString().capitalize());
-        } else {
-          debugPrint(AppTexts.errorSendingRequest);
-          debugPrint(e.message);
-        }
+      return _handleDioException(e);
+      //return WeatherData().copyWith(permission: (e));
+    }
+  }
+
+  WeatherData? _handleDioException(dynamic e) {
+    if (e is DioException) {
+      if (e.response != null) {
+        debugPrint(AppTexts.dioError);
+        debugPrint('STATUS: ${e.response?.statusCode}');
+        debugPrint('DATA: ${e.response?.data}');
+        debugPrint('HEADERS: ${e.response?.headers}');
+        return WeatherData().copyWith(permission: (e.response?.data['message']));
       } else {
-        debugPrint('${AppTexts.unknownError} $e');
+        debugPrint(AppTexts.errorSendingRequest);
+        debugPrint(e.message);
+        return WeatherData().copyWith(permission: (AppTexts.errorSendingRequest));
       }
-      return WeatherData(); // Return an empty WeatherData on error
+    } else {
+      debugPrint('${AppTexts.unknownError} $e');
+      return WeatherData().copyWith(permission: (AppTexts.unknownError));
     }
   }
 
   @override
   Future<List<WeatherData>> getForecastWeather(String cityName) async {
-    final permission = await _handleLocationPermission();
+    List<WeatherData> forecast16Days = [];
 
-    if (!permission.hasPermission) {
-      // Return a list containing a single WeatherData instance with permission info
-      return [
-        WeatherData(
-          hasPermission: permission.hasPermission,
-          permission: permission.permissionText,
-        ),
-      ];
+    if (cityName.isNotEmpty) {
+      forecast16Days = await _getForecastWeatherByCityName(cityName);
+    } else {
+      final permission = await _handleLocationPermission();
+
+      if (permission.hasPermission) {
+        forecast16Days = await _getForecastWeatherByLocation();
+      }
     }
 
+    return forecast16Days;
+  }
+
+  Future<List<WeatherData>> _getForecastWeatherByCityName(String cityName) async {
+    try {
+      final response16Days = await _dio.get(
+        GetQuery.getForecastWeatherByCityName(
+          cityName: cityName,
+          cnt: 16,
+        ).buildQuery(),
+      );
+
+      return (response16Days.data['list'] as List)
+          .map((item) => WeatherData.fromJson(item))
+          .toList();
+    } catch (e) {
+      _handleDioException(e);
+      return [];
+    }
+  }
+
+  Future<List<WeatherData>> _getForecastWeatherByLocation() async {
     try {
       final Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      final response16Days = cityName.isNotEmpty
-          ? await _dio.get(
-              GetQuery.getForecastWeatherByCityName(
-                cityName: cityName,
-                cnt: 16,
-              ).buildQuery(),
-            )
-          : await _dio.get(
-              GetQuery.getForecastWeather(
-                lat: position.latitude,
-                lon: position.longitude,
-                cnt: 16,
-              ).buildQuery(),
-            );
+      final response16Days = await _dio.get(
+        GetQuery.getForecastWeather(
+          lat: position.latitude,
+          lon: position.longitude,
+          cnt: 16,
+        ).buildQuery(),
+      );
 
-      final List<WeatherData> forecast16Days =
-          (response16Days.data['list'] as List).map((item) => WeatherData.fromJson(item)).toList();
-      return forecast16Days; // or forecast16Days
+      return (response16Days.data['list'] as List)
+          .map((item) => WeatherData.fromJson(item))
+          .toList();
     } catch (e) {
-      if (e is DioException) {
-        if (e.response != null) {
-          debugPrint('Dio error!');
-          debugPrint('STATUS: ${e.response?.statusCode}');
-          debugPrint('DATA: ${e.response?.data}');
-          debugPrint('HEADERS: ${e.response?.headers}');
-        } else {
-          debugPrint('Error sending request!');
-          debugPrint(e.message);
-        }
-      } else {
-        debugPrint('Unknown error occurred: $e');
-      }
-      return []; // Return an empty list on error
+      _handleDioException(e);
+      return [];
     }
   }
 }
