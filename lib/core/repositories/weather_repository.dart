@@ -16,7 +16,9 @@ class WeatherRepository implements IWeatherRepository {
     final PermissionData permission = await weatherService.handleLocationPermission();
     final weatherData =
         await weatherService.getCurrentWeatherByLocationOrCurrentLocation(cityName, permission);
-    return weatherData ?? WeatherData();
+    return weatherData ??
+        WeatherData().copyWith(
+            hasPermission: permission.hasPermission, permission: permission.permissionText);
   }
 
   @override

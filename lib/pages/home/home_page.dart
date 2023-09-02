@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:weather_app/const/app_colors.dart';
 import 'package:weather_app/core/blocs/home/home_bloc.dart';
 import 'package:weather_app/models/weather_data.dart';
+import 'package:weather_app/pages/home/widgets/city_list.dart';
+import 'package:weather_app/pages/home/widgets/city_text_field.dart';
+import 'package:weather_app/pages/home/widgets/refresh_button.dart';
 import 'package:weather_app/pages/home/widgets/sized_container.dart';
 import 'package:weather_app/pages/home/widgets/weather_column.dart';
 import 'package:weather_app/utils/weather_status_utils.dart';
@@ -64,15 +67,50 @@ class _HomePageState extends State<HomePage> {
               decoration: BoxDecoration(
                 gradient: gradient,
               ),
-              child: WeatherColumn(
-                cityController: _cityController,
-                scrollController: _scrollController,
-                weather: weather,
-                mainWeather: mainWeather,
-                cityName: state.item.name ?? '',
-                cityList: state.cityList ?? [],
-                forecastWeatherList: state.items,
-              ),
+              child: weather == null
+                  ? Column(
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).viewPadding.top),
+                        const SizedBox(height: 10.0),
+                        Center(
+                            child: CityTextField(
+                          controller: _cityController,
+                        )),
+                        if ((state.cityList ?? []).isNotEmpty && _cityController.text.isNotEmpty)
+                          Align(
+                            alignment: Alignment.center,
+                            child: Column(
+                              children: [
+                                MediaQuery.removePadding(
+                                  context: context,
+                                  child: CityList(
+                                      cityList: (state.cityList ?? []),
+                                      cityController: _cityController,
+                                      paddingTop: 0),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Expanded(
+                                  child: Center(child: RefreshButton(refresh: _searchForWeather))),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : WeatherColumn(
+                      cityController: _cityController,
+                      scrollController: _scrollController,
+                      weather: weather,
+                      mainWeather: mainWeather,
+                      cityName: state.item.name ?? '',
+                      cityList: state.cityList ?? [],
+                      forecastWeatherList: state.items,
+                      refresh: _searchForWeather,
+                    ),
             );
           } else {
             return Container(

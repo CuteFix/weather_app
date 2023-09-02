@@ -8,8 +8,10 @@ import 'package:weather_app/models/city_data.dart';
 class CityList extends StatefulWidget {
   final List<LocationData> cityList;
   final TextEditingController cityController;
+  final double paddingTop;
 
-  const CityList({super.key, required this.cityList, required this.cityController});
+  const CityList(
+      {super.key, required this.cityList, required this.cityController, required this.paddingTop});
 
   @override
   State<CityList> createState() => _CityListState();
@@ -19,9 +21,10 @@ class _CityListState extends State<CityList> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: widget.cityList.length * 60,
+      height: (widget.cityList.length * 50),
       width: (MediaQuery.of(context).size.width - 102),
       child: ListView.separated(
+        padding: EdgeInsets.only(top: widget.paddingTop),
         itemCount: widget.cityList.length,
         itemBuilder: (context, index) {
           final isLastItem = index == widget.cityList.length - 1;

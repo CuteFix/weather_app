@@ -19,7 +19,7 @@ class WeatherListView extends StatefulWidget {
 }
 
 class _WeatherListViewState extends State<WeatherListView> {
-  bool forecastWeatherListLength = true;
+  bool forecastWeatherChange = true;
 
   @override
   Widget build(BuildContext context) {
@@ -41,28 +41,8 @@ class _WeatherListViewState extends State<WeatherListView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    forecastWeatherListLength = false;
-                  });
-                },
-                child: Text(
-                  '8 days',
-                  style: AppStyle.textStyleWeatherDays(),
-                ),
-              ),
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    forecastWeatherListLength = true;
-                  });
-                },
-                child: Text(
-                  '16 days',
-                  style: AppStyle.textStyleWeatherDays(),
-                ),
-              ),
+              _buttonDays(false, '8'),
+              _buttonDays(true, '16'),
             ],
           ),
           Expanded(
@@ -72,7 +52,7 @@ class _WeatherListViewState extends State<WeatherListView> {
               thickness: 4,
               radius: const Radius.circular(16.0),
               child: ListView.builder(
-                itemCount: forecastWeatherListLength ? widget.forecastWeatherList.length : 8,
+                itemCount: forecastWeatherChange ? widget.forecastWeatherList.length : 8,
                 controller: widget.scrollController,
                 padding: EdgeInsets.zero,
                 itemBuilder: (context, index) {
@@ -147,6 +127,20 @@ class _WeatherListViewState extends State<WeatherListView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  InkWell _buttonDays(bool forecastWeatherChange, String days) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          this.forecastWeatherChange = forecastWeatherChange;
+        });
+      },
+      child: Text(
+        '$days days',
+        style: AppStyle.textStyleWeatherDays(),
       ),
     );
   }

@@ -30,8 +30,9 @@ class WeatherService implements IWeatherService {
 
       if (cityName.isNotEmpty) {
         final locations = await locationFromAddress(cityName);
-        placeMark =
-            await placemarkFromCoordinates(locations.first.latitude, locations.first.longitude);
+        placeMark = await placemarkFromCoordinates(
+            locations.first.latitude, locations.first.longitude,
+            localeIdentifier: "en_US");
         final query = GetQuery.getForecastWeatherByCoordinates(
           latitude: locations.first.latitude,
           longitude: locations.first.longitude,
@@ -44,7 +45,8 @@ class WeatherService implements IWeatherService {
           final position = await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.high,
           );
-          placeMark = await placemarkFromCoordinates(position.latitude, position.longitude);
+          placeMark = await placemarkFromCoordinates(position.latitude, position.longitude,
+              localeIdentifier: "en_US");
           final query = GetQuery.getForecastWeatherByCoordinates(
             latitude: position.latitude,
             longitude: position.longitude,
