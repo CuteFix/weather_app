@@ -30,7 +30,7 @@ class AppStyle {
         ),
       );
 
-  static TextStyle textStyleWeatherDescription() => _googleFonts(
+  static TextStyle textStyleWeatherDays() => _googleFonts(
         const TextStyle(
           fontSize: 18.0,
         ),

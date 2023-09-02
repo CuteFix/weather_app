@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:weather_app/core/repositories/weather_repository.dart';
+import 'package:weather_app/core/service/weather_service.dart';
 import 'package:weather_app/models/city_data.dart';
 import 'package:weather_app/models/weather_data.dart';
 import 'package:weather_app/utils/debouncer.dart';
@@ -17,7 +19,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final Debouncer _debouncer = Debouncer(milliseconds: 500);
   HomeBloc({IWeatherRepository? weatherRepository})
       : super(LoadedHomeState(item: WeatherData(), items: const [])) {
-    _weatherRepository = weatherRepository ?? WeatherRepository();
+    final dio = Dio();
+    _weatherRepository = weatherRepository ?? WeatherRepository(WeatherService(dio));
 
     on<GetCurrentLocationEvent>(_getCurrentLocation);
     on<GetListCityEvent>(_getListCityEvent);
